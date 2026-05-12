@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
@@ -9,8 +10,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
+import glob
+import re
 
-json_path = '../api/output/films_316.json'
+
+base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(base_path)
+files = glob.iglob(f'{base_path}/api/output/films_*.json')
+
+def get_number(filename):
+    match = re.search(r'(\d+)\.json$', filename)
+    return int(match.group(1)) if match else -1
+
+largest_file = max(files, key=get_number)
+json_path = largest_file
 
 with open(json_path, 'r', encoding='utf-8') as f:
     raw_data = json.load(f)
@@ -113,10 +126,10 @@ if len(features) > 100:
     plt.legend(title='Кластеры фильмов', title_fontsize=12)
     plt.grid(True, alpha=0.3)
 
-    description = "Кластер 0: Низкий рейтинг и малый бюджет\n" \
-                  "Кластер 1: Средний рейтинг и средний бюджет \n" \
-                  "Кластер 2: Высокий рейтинг и низкий бюджет\n" \
-                  "Кластер 3: Высокий рейтинг и высокий бюджет"
+    description = "Кластер 0: Высокий рейтинг и низкие сборы\n" \
+                  "Кластер 1: Средний рейтинг и средние сборы \n" \
+                  "Кластер 2: Высокий рейтинг и высокие сборы\n" \
+                  "Кластер 3: Низкий рейтинг и низкие сборы"
     plt.figtext(0.5, 0.01, description, ha='center', fontsize=10,
                 bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8))
 

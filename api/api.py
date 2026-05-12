@@ -3,10 +3,26 @@ import json
 import time
 import os
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 load_dotenv()
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+api_keys = []
+i = 0
+while True:
+    key = os.getenv(f'X-API-KEY{i}')
+    if key is None:
+        break
+    api_keys.append(key)
+    i += 1
+
+if not api_keys:
+    raise ValueError("Не найдено ни одного API-ключа")
+
+print(f"Найдено {len(api_keys)} API-ключей")
+
 headers = {
-    'X-API-KEY': os.getenv('X-API-KEY0')
+    'X-API-KEY': api_keys[0]
 }
 params = {
     'type': 'movie',
@@ -16,7 +32,7 @@ params = {
     'next': ''
 }
 
-def get_data(next_token, films, headers, params):
+def get_data(next_token, films, headers, params, inner_pbar):
     global success
     films = films
     while next_token:
@@ -29,6 +45,7 @@ def get_data(next_token, films, headers, params):
             films.append(meta_data_i["docs"])
             next_token = meta_data_i["next"]
             success += 1
+            inner_pbar.update(1)
             time.sleep(1)
 
         except requests.exceptions.HTTPError as e:
@@ -48,12 +65,19 @@ films = []
 films.extend(meta_data['docs'])
 next_token = meta_data["next"]
 
-key_count = sum(1 for line in open('.env', 'r'))
-for key in range (key_count):
-    print(f'-----------\nКлюч №{key+1}')
-    films, next_token = get_data(next_token, films, headers, params)
-    print(f'Совершено запросов: {success}')
-    headers['X-API-KEY'] = os.getenv(f'X-API-KEY{key+1}')
+#key_count = sum(1 for line in open('.env', 'r'))
+with tqdm(total=len(api_keys), desc="Процесс выполнения", position=0) as global_pbar:
+    for idx,key in enumerate (api_keys):
+        print(f'\n{"-" * 40}\n')
+        print(f'Ключ №{idx + 1}/{len(api_keys)}')
+
+        with tqdm(desc=f"Ключ №{idx + 1}", position=1, leave=False) as inner_pbar:
+            films, next_token = get_data(next_token, films, headers, params, inner_pbar)
+        print(f'Совершено запросов: {success}')
+        global_pbar.update(1)
+
+        if idx < len(api_keys) - 1:
+            headers['X-API-KEY'] = os.getenv(f'X-API-KEY{idx+1}')
 
 with open(f"output/films_{success}.json", "w", encoding="utf-8") as f:
     json.dump(films, f, indent=4, ensure_ascii=False)
