@@ -1,7 +1,7 @@
 import os
-import subprocess
-import sys
 from dotenv import load_dotenv, dotenv_values, set_key
+from api.api import load_api
+from analyze.analyze import load_analyze
 
 
 def get_env_path():
@@ -95,7 +95,7 @@ def manage_keys():
         else:
             print("Неверный выбор!")
         input("\nНажмите Enter для продолжения...")
-
+'''
 def run_script(script_name: str, folder: str):
     script_path = os.path.join(base_path, folder, script_name)
 
@@ -121,7 +121,7 @@ def run_script(script_name: str, folder: str):
         print(f" Критическая ошибка запуска: {e}")
 
     input("\nНажмите Enter для возврата в меню...")
-
+'''
 def main_menu():
     while True:
         clear_screen()
@@ -135,10 +135,10 @@ def main_menu():
             manage_keys()
         elif choice == "2":
             print("Запуск сбора данных...\n")
-            run_script('api.py', 'api')
+            load_api(0)
         elif choice == "3":
             print("Запуск анализа...\n")
-            run_script('analyze.py', 'analyze')
+            load_analyze()
         elif choice == "4":
             print("До свидания!")
             break
@@ -147,3 +147,4 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
+
